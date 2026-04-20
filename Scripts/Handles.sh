@@ -26,6 +26,25 @@ if [ -d *"homeproxy"* ]; then
 	cd $PKG_PATH && echo "homeproxy date has been updated!"
 fi
 
+#预置nikki数据 geoip.metadb zashboard
+if [ -d *"OpenWrt-nikki"* ]; then
+
+	GEOIP_METADB="https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb"
+	UI_ZASHBOARD="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+
+	mkdir -p ./OpenWrt-nikki/luci-app-nikki/root/etc/nikki/run/
+	cd ./OpenWrt-nikki/luci-app-nikki/root/etc/nikki/run/
+
+	curl -sL -o geoip.metadb $GEOIP_METADB && echo "geoip.metadb 完成!"
+	chmod +x ./*
+
+	curl -sL -o dist-no-fonts.zip $UI_ZASHBOARD && mkdir -p ./ui && unzip dist-no-fonts.zip -d ./ui/ && rm dist-no-fonts.zip
+	mv ./ui/dist ./ui/zashboard
+	echo "nikk zashboard面板 完成!"
+
+	cd $PKG_PATH && echo "nikki date has been updated!"
+fi
+
 #修改argon主题字体和颜色
 if [ -d *"luci-theme-argon"* ]; then
 	echo " "
