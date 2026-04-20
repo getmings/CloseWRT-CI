@@ -10,6 +10,9 @@ on:
       WRT_CONFIG:
         required: true
         type: string
+      WRT_CONFIG_FILE:
+        required: false
+        type: string
       WRT_THEME:
         required: true
         type: string
@@ -40,13 +43,27 @@ on:
       WRT_PACKAGE:
         required: false
         type: string
+      WRT_GFW:
+        required: false
+        type: boolean
+        default: false
+      WRT_USB:
+        required: false
+        type: boolean
+        default: false
+      WRT_MMC:
+        required: false
+        type: boolean
+        default: false
       WRT_TEST:
         required: false
-        type: string
+        type: boolean
+        default: false
 
 env:
   GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
   WRT_CONFIG: ${{inputs.WRT_CONFIG}}
+  WRT_CONFIG_FILE: ${{inputs.WRT_CONFIG_FILE}}
   WRT_THEME: ${{inputs.WRT_THEME}}
   WRT_NAME: ${{inputs.WRT_NAME}}
   WRT_SSID: ${{inputs.WRT_SSID}}
@@ -57,6 +74,9 @@ env:
   WRT_BRANCH: ${{inputs.WRT_BRANCH}}
   WRT_SOURCE: ${{inputs.WRT_SOURCE}}
   WRT_PACKAGE: ${{inputs.WRT_PACKAGE}}
+  WRT_GFW: ${{inputs.WRT_GFW}}
+  WRT_USB: ${{inputs.WRT_USB}}
+  WRT_MMC: ${{inputs.WRT_MMC}}
   WRT_TEST: ${{inputs.WRT_TEST}}
 
 jobs:
@@ -88,10 +108,29 @@ jobs:
 
       - name: Initialization Values
         run: |
+          if [ -z "$WRT_CONFIG_FILE" ]; then
+            WRT_CONFIG_FILE="$WRT_CONFIG.txt"
+          fi
+
+          WRT_GFW=$(echo "${WRT_GFW:-false}" | tr '[:upper:]' '[:lower:]')
+          WRT_USB=$(echo "${WRT_USB:-false}" | tr '[:upper:]' '[:lower:]')
+          WRT_MMC=$(echo "${WRT_MMC:-false}" | tr '[:upper:]' '[:lower:]')
+          WRT_TEST=$(echo "${WRT_TEST:-false}" | tr '[:upper:]' '[:lower:]')
+
+          if [ ! -f "./Config/$WRT_CONFIG_FILE" ]; then
+            echo "Config file not found: ./Config/$WRT_CONFIG_FILE"
+            exit 1
+          fi
+
+          echo "WRT_CONFIG_FILE=$WRT_CONFIG_FILE" >> $GITHUB_ENV
+          echo "WRT_GFW=$WRT_GFW" >> $GITHUB_ENV
+          echo "WRT_USB=$WRT_USB" >> $GITHUB_ENV
+          echo "WRT_MMC=$WRT_MMC" >> $GITHUB_ENV
+          echo "WRT_TEST=$WRT_TEST" >> $GITHUB_ENV
           echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
           echo "WRT_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
           echo "WRT_INFO=${WRT_SOURCE%%/*}" >> $GITHUB_ENV
-          echo "WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./Config/$WRT_CONFIG.txt)" >> $GITHUB_ENV
+          echo "WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./Config/$WRT_CONFIG_FILE)" >> $GITHUB_ENV
           echo "WRT_WIFI=wifi-yes" >> $GITHUB_ENV
           echo "WRT_KVER=none" >> $GITHUB_ENV
           echo "WRT_LIST=none" >> $GITHUB_ENV
@@ -165,17 +204,64 @@ jobs:
         run: |
           cd ./wrt/package/
 
+          is_true() {
+            case "${1,,}" in
+              1|true|yes|on) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
           $GITHUB_WORKSPACE/Scripts/Packages.sh
+
+          if is_true "$WRT_GFW"; then
+            $GITHUB_WORKSPACE/Scripts/Gfw.sh
+            echo "Custom gfw packages added!"
+          fi
+
+          if is_true "$WRT_USB" || is_true "$WRT_MMC"; then
+            $GITHUB_WORKSPACE/Scripts/Disk.sh
+            echo "Custom disk packages added!"
+          fi
+
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
       - name: Custom Settings
         run: |
           cd ./wrt/
 
+          is_true() {
+            case "${1,,}" in
+              1|true|yes|on) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
           if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
-            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
+            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG_FILE >> .config
           else
-            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
+            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG_FILE $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
+          fi
+
+          ADD_DISK_CONFIG=false
+
+          echo "WRT_GFW=$WRT_GFW"
+
+          if is_true "$WRT_GFW"; then
+            cat $GITHUB_WORKSPACE/Config/GFW.txt >> .config
+          fi
+
+          if is_true "$WRT_USB"; then
+            cat $GITHUB_WORKSPACE/Config/USB.txt >> .config
+            ADD_DISK_CONFIG=true
+          fi
+
+          if is_true "$WRT_MMC"; then
+            echo "CONFIG_PACKAGE_mmc-utils=y" >> .config
+            ADD_DISK_CONFIG=true
+          fi
+
+          if [[ "$ADD_DISK_CONFIG" == "true" ]]; then
+            cat $GITHUB_WORKSPACE/Config/DISK.txt >> .config
           fi
 
           $GITHUB_WORKSPACE/Scripts/Settings.sh
@@ -238,12 +324,6 @@ jobs:
           tag_name: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-${{env.WRT_DATE}}
           files: ./wrt/upload/*.*
           body: |
-            这是个平台固件包，内含多个设备！
-            请注意选择你需要的设备固件！
-            不要问，刷就完事了！
-
-            全系带闭源硬件加速，别问了！
-
             源码：${{env.WRT_REPO}}
             分支：${{env.WRT_BRANCH}}
             提交：${{env.WRT_HASH}}
