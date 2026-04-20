@@ -1,0 +1,11 @@
+#依赖-DISK
+CONFIG_PACKAGE_luci-app-partexp=y
+CONFIG_PACKAGE_luci-app-samba4=y
+
+CONFIG_PACKAGE_blkid=y
+CONFIG_PACKAGE_cfdisk=y
+CONFIG_PACKAGE_cgdisk=y
+CONFIG_PACKAGE_sfdisk=y
+CONFIG_PACKAGE_sgdisk=y
+CONFIG_PACKAGE_fdisk=y
+CONFIG_PACKAGE_gdisk=y
