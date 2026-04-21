@@ -1,26 +1,79 @@
-# SPDX-License-Identifier: MIT
-# Copyright (C) 2026 VIKINGYFY
-
-name: Cache-Clean
+name: Auto-Clean
 
 on:
-  #自动清理：每周一早上4点
-  # schedule:
-  #   - cron: 0 20 * * 0
-  #手动清理
+  # 自动清理：每周日早上3点（可开启）
+  #schedule:
+  #  - cron: 0 19 * * 0
+
+  # 手动清理
   workflow_dispatch:
+    inputs:
+      NUMBER:
+        description: '保留最近几个Release（默认1个）'
+        default: '1'
+        required: false
+        type: string
+
+      RUNS_NUMBER:
+        description: '保留最近几次工作流记录（默认1次）'
+        default: '1'
+        required: false
+        type: string
+
+      CLEAN_CACHE:
+        description: '是否清理缓存（默认否）'
+        default: 'false'
+        required: false
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 permissions: write-all
 
-env:
-  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
 jobs:
-  cleanup:
+  auto_clean:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Projects
-        uses: actions/checkout@main
+      - name: 删除旧Release版本
+        uses: dev-drprasad/delete-older-releases@master
+        with:
+          keep_latest: ${{ inputs.NUMBER || '2' }}
+          delete_tags: true
 
-      - name: Cache Clean
-        run: gh cache delete --all
+      - name: 删除旧的工作流记录
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 0
+          keep_minimum_runs: ${{ inputs.RUNS_NUMBER || '5' }}
+
+      - name: 安装GitHub CLI（用于清理缓存）
+        if: inputs.CLEAN_CACHE == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: 清理前显示缓存
+        if: inputs.CLEAN_CACHE == 'true'
+        run: |
+          echo "清理前，当前仓库缓存列表："
+          gh cache list --repo ${{ github.repository }}
+
+      - name: 清理缓存
+        if: inputs.CLEAN_CACHE == 'true'
+        run: |
+          if gh cache list --repo ${{ github.repository }} | grep -q .; then
+            gh cache delete --all --repo ${{ github.repository }}
+            echo "缓存已清理完毕"
+          else
+            echo "当前没有缓存，无需清理"
+          fi
+
+      - name: 清理后显示缓存
+        if: inputs.CLEAN_CACHE == 'true'
+        run: |
+          echo "清理后，当前仓库缓存列表："
+          gh cache list --repo ${{ github.repository }}
