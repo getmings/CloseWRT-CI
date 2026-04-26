@@ -85,7 +85,7 @@ UPDATE_PACKAGE "lucky" "gdy666/luci-app-lucky" "main"   #lucky 大吉
 UPDATE_PACKAGE "luci-app-adguardhome" "sirpdboy/luci-app-adguardhome" "main"   #adguardhome去广告
 UPDATE_PACKAGE "luci-app-timecontrol" "sirpdboy/luci-app-timecontrol" "main"  #上网时间控制js版
 UPDATE_PACKAGE "luci-app-wechatpush" "tty228/luci-app-wechatpush" "master"   #微信推送
-UPDATE_PACKAGE "luci-app-zzzcatspeedtest" "getmings/luci-app-zzzcatspeedtest" "main"   #内网测速
+UPDATE_PACKAGE "luci-app-zzzcatspeedtest" "Yuzhii0718/luci-app-zzzcatspeedtest" "main"   #内网测速
 
 #更新软件包版本
 UPDATE_VERSION() {
