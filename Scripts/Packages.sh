@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
+# 升级golang
+rm -rf ../feeds/packages/lang/golang
+git clone https://github.com/sbwml/packages_lang_golang -b 26.x ../feeds/packages/lang/golang
+
 #安装和更新软件包
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
@@ -61,7 +65,8 @@ UPDATE_PACKAGE "fancontrol" "rockjake/luci-app-fancontrol" "main"
 UPDATE_PACKAGE "gecoosac" "laipeng668/luci-app-gecoosac" "main"
 UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5" "" "v2dat"
 UPDATE_PACKAGE "netspeedtest" "sirpdboy/luci-app-netspeedtest" "master" "" "homebox speedtest"  #homebox speedtest测速
-UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-app-wolplus"
+UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "axonhub gecoosac sing-box luci-app-homeproxy luci-app-timewol luci-app-wolplus luci-app-wolultra"
+
 UPDATE_PACKAGE "owq-wol" "isalikai/luci-app-owq-wol" "main"  #wol加强版
 UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
@@ -130,5 +135,5 @@ UPDATE_VERSION() {
 }
 
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
-UPDATE_VERSION "sing-box"
+#UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
