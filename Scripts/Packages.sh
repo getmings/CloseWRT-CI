@@ -93,6 +93,7 @@ UPDATE_PACKAGE "luci-app-timecontrol" "sirpdboy/luci-app-timecontrol" "main"  #�
 UPDATE_PACKAGE "luci-app-wechatpush" "tty228/luci-app-wechatpush" "master"   #微信推送
 UPDATE_PACKAGE "luci-app-zzzcatspeedtest" "Yuzhii0718/luci-app-zzzcatspeedtest" "main"   #内网测速
 UPDATE_PACKAGE "luci-app-rtp2httpd" "stackia/rtp2httpd" "main" "" "openwrt-support"  #IPTV 流媒体转发服务器
+UPDATE_PACKAGE "luci-app-mtk-easymesh" "yyyyy114514/luci-app-mtk-easymesh" "main"  #MTK EasyMesh 联发科闭源驱动的EasyMesh
 
 #更新软件包版本
 UPDATE_VERSION() {
